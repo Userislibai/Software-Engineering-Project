@@ -1,0 +1,108 @@
+实验一
+#include "ioCC2530.h"
+
+void Delay(unsigned int n) {
+    unsigned int i, j;
+    for (i = 0; i < n; i++)
+        for (j = 0; j < 600; j++) ; // 简单的延迟函数，延迟一段时间
+}
+
+void main(void) {
+    P1SEL = 0x00; // 将P1.0和P1.1设置为普通I/O口
+    P1DIR = 0x3; // 将P1.0和P1.1设置为输出
+
+    while (1) {
+        // LED1每秒闪烁一次
+        P1_1 = !P1_1; // 切换LED1的状态
+        Delay(100); // 延迟500个时间单位
+
+        // LED0每秒闪烁两次
+        for (int i = 0; i < 2; i++) {
+            P1_0 = !P1_0; // 切换LED0的状态
+            Delay(50); // 延迟250个时间单位
+        }
+    }
+}
+实验2
+#include "ioCC2530.h"
+
+void Delay(unsigned char n) {
+    unsigned char i;
+    unsigned int j;
+    for(i = 0; i < n; i++)
+        for(j = 1; j < 100; j++) ; // 简单的延迟函数，延迟一段时间
+}
+
+void main(void) {
+    P1SEL = 0x00; // 将P1.0设置为普通I/O口
+    P1DIR = 0x3; // 将P1.0和P1.1设置为输出
+
+    while(1) {
+      for(int t=0;t<100;t=t+5){
+      Delay(t);
+      P1_0=1;
+      Delay(100-t);
+      P1_0=0;
+      }
+      for(int t=0;t<100;t=t+5){
+      Delay(t);
+      P1_0=0;
+      Delay(100-t);
+      P1_0=1;
+      }
+    }}
+实验三#include <ioCC2530.h>
+
+#define uint unsigned int
+#define uchar unsigned char
+
+//定义控制灯的端口
+#define LED1 P1_0
+#define LED2 P1_1
+
+void Delay(uint n) 
+{
+  
+    uint i, t;
+    for (i = 0; i < 5; i++)
+        for (t = 0; t < n; t++);
+}
+
+void LedInit(void) {
+    P1DIR |= 0x03; //设置 LED
+    LED1 = 1;
+    LED2 = 1;
+}
+
+void InitIrda(void) 
+{
+    // P1_2 interrupt io initialized.
+    P1DIR &= ~(0x01 << 2); //P1_2 input mode
+    P1INP &= ~(0x01 << 2); //P1_2 Pull up
+    P1IEN |= (0x01 << 2); //P1_2 int enable
+    PICTL &= ~(0x01 << 1); //P1_2 rasing edge
+    //PICTL |= (0x01<<1); //falling edge
+    IEN0 |= 0x80; //全局允许中断
+    IEN2 |= (0x01 << 4); //P1 端口中断允许
+    P1IFG &= ~(0x01 << 2); // P1_2 中断标志清 0
+}
+
+#pragma vector = P1INT_VECTOR
+__interrupt void P1_ISR(void) {
+    if ((P1IFG & 0x04) > 0) //中断
+    {
+        P1IFG &= ~(0x04);
+        LED2 = !LED2;
+        Delay(1000);
+    }
+    P1IFG = 0; //清中断标志
+}
+void main(void) {
+    LedInit();
+    InitIrda();
+    while (1) {
+        LED1 = !LED1;
+        Delay(50000);
+        Delay(50000);
+    }
+}
